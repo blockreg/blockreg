@@ -19,7 +19,7 @@ contract Events is Ownable {
 
 	function createEvent(string memory name_, int maxAttendance_) public {
 		//Create the event
-		_events.push(Event(name_, maxAttendance_, 0));
+		_events.push(Event(name_, int32(maxAttendance_), 0));
 		uint id = _events.length - 1;
 
 		_eventToOwner[id] = msg.sender;
@@ -37,6 +37,6 @@ contract Events is Ownable {
 		Event storage _event = _events[eventId_];
 		require(maxAttendance_ == -1 || uint256(maxAttendance_) >= _event.countRegistered);
 		_event.name = name_;
-		_event.maxAttendance = maxAttendance_;
+		_event.maxAttendance = int32(maxAttendance_);
 	}
 }
