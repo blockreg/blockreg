@@ -8,6 +8,7 @@ contract Events is Ownable {
 	Event[] private _events;
 
 	event NewEvent(string name, uint id, int maxAttendance);
+	event UpdateEvent(uint id, string name, int maxAttendance);
 
 	mapping(uint256 => address) internal _eventToOwner;
 	mapping(address => uint256) internal _eventsOwnedCount;
@@ -36,5 +37,6 @@ contract Events is Ownable {
 		require(maxAttendance_ == -1 || uint256(maxAttendance_) >= _event.countRegistered);
 		_event.name = name_;
 		_event.maxAttendance = int32(maxAttendance_);
+		emit UpdateEvent(eventId_, name_, maxAttendance_);
 	}
 }
