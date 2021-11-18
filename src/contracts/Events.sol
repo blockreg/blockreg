@@ -7,7 +7,7 @@ import "./Event.sol";
 contract Events is Ownable {
 	Event[] private _events;
 
-	event NewEvent(string name, uint id);
+	event NewEvent(string name, uint id, int maxAttendance);
 	event UpdateEvent(uint id, string name, int maxAttendance);
 
 	mapping(uint256 => address) internal _eventToOwner;
@@ -22,15 +22,13 @@ contract Events is Ownable {
 		//Create the event
 		_events.push(Event(name_, int32(maxAttendance_), 0));
 		uint id = _events.length - 1;
-
 		_eventToOwner[id] = msg.sender;
 		_eventsOwnedCount[msg.sender]++;
-		emit NewEvent(name_, id);
+		emit NewEvent(name_, id, maxAttendance_);
 	}
 
 	function getEvent(uint eventId_) external view returns(Event memory) {
 		require(eventId_ < _events.length);
-
 		return _events[eventId_];
 	}
 
