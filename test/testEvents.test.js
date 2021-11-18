@@ -3,6 +3,7 @@ const Events = artifacts.require("Events");
 contract("Events", accounts => {
     let [alice, bob] = accounts;
     let contractInstance;
+
     let eventNames = ["Mike's Birthday", "Dubai Trip"]
     let eventAttendance = 500;
     //Create new contract instance
@@ -14,6 +15,7 @@ contract("Events", accounts => {
             .createEvent(eventNames[0], eventAttendance);
         // Confirm that the event was created
         assert.equal(result.receipt.status, true);
+
         // Confirm that event with name, and max attendance values was created
         assert.equal(result.logs[0].args.name,eventNames[0]);
         assert.equal(result.logs[0].args.maxAttendance.toNumber()
