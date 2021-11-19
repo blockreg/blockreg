@@ -18,12 +18,12 @@ contract RemoteStorage is ChainlinkClient {
   
   event EventDataStored (
     bytes32 indexed requestId,
-	uint eventId
+    uint eventId
   );
 
   event RegistrationDataStored(
     bytes32 indexed requestId,
-	uint registrationId
+    uint registrationId
   );
 
   /**
@@ -44,7 +44,7 @@ contract RemoteStorage is ChainlinkClient {
    */
   function setEventData(
     string memory _jobId,
-	uint256 eventId,
+    uint256 eventId,
     string memory _name,
     string memory _description
   )
@@ -52,7 +52,7 @@ contract RemoteStorage is ChainlinkClient {
   {
     Chainlink.Request memory req = buildChainlinkRequest(_stringToBytes32(_jobId), address(this), this.fulfillSetEventData.selector);
     req.addUint("eventId", eventId);
-	req.add("name", _name);
+    req.add("name", _name);
     req.add("description", _description);
     requestOracleData(req, ORACLE_PAYMENT);
   }
@@ -67,7 +67,7 @@ contract RemoteStorage is ChainlinkClient {
    */
   function setRegistrationData(
     string memory _jobId,
-	uint256 registrationId,
+    uint256 registrationId,
     string memory _name,
     string memory _company,
     string memory _email
@@ -75,7 +75,7 @@ contract RemoteStorage is ChainlinkClient {
     public
   {
     Chainlink.Request memory req = buildChainlinkRequest(_stringToBytes32(_jobId), address(this), this.fulfillSetRegistrationData.selector);
-	req.addUint("registrationId", registrationId);
+    req.addUint("registrationId", registrationId);
     req.add("name", _name);
     req.add("company", _company);
     req.add("email", _email);
@@ -104,7 +104,7 @@ contract RemoteStorage is ChainlinkClient {
    */
   function fulfillSetEventData(
     bytes32 _requestId,
-	uint256 _eventId,
+    uint256 _eventId,
     bytes calldata _cid
   )
     public
@@ -112,7 +112,7 @@ contract RemoteStorage is ChainlinkClient {
   {
     lastRequestId = _requestId;
     cid = string(abi.encodePacked(_cid));
-	eventId = _eventId;
+    eventId = _eventId;
   } 
 
   /**
@@ -121,7 +121,7 @@ contract RemoteStorage is ChainlinkClient {
    */
   function fulfillSetRegistrationData(
     bytes32 _requestId,
-	uint256 _registrationId,
+    uint256 _registrationId,
     bytes calldata _cid
   )
     public
@@ -129,7 +129,7 @@ contract RemoteStorage is ChainlinkClient {
   {
     lastRequestId = _requestId;
     cid = string(abi.encodePacked(_cid));
-	registrationId = _registrationId;
+    registrationId = _registrationId;
   }
   
   /**
