@@ -1,0 +1,46 @@
+type = "directrequest"
+schemaVersion = 1
+name = "addRegistration"
+contractAddress = "0x43B26Ac199FA7c8fef86e716FA70e29ed11977Bb"
+maxTaskDuration = "0s"
+observationSource = """
+decode_log   [
+  type="ethabidecodelog"
+  abi="OracleRequest(bytes32 indexed specId, address requester, bytes32 requestId, uint256 payment, address callbackAddr, bytes4 callbackFunctionId, uint256 cancelExpiration, uint256 dataVersion, bytes data)"
+  data="$(jobRun.logData)"
+  topics="$(jobRun.logTopics)"
+]
+
+decode_cbor  [
+  type="cborparse" 
+  data="$(decode_log.data)"
+]
+
+fetch  [
+  type=bridge 
+  name="ipfs" 
+  requestData="{\\"id\\": $(jobSpec.externalJobID), \\"action\\": \\"addRegistration\\", \\"registrationId\\": $(decode_cbor.registrationId), \\"name\\": $(decode_cbor.name), \\"company\\": $(decode_cbor.company), \\"email\\": $(decode_cbor.email)}"
+]
+
+parse  [
+  type="jsonparse" 
+  path="data,path" 
+  data="$(fetch)"
+]
+
+encode_data  [
+  type="ethabiencode" 
+  abi="(bytes32 requestId, uint256 registrationId, bytes cid)" 
+  data="{ \\"requestId\\": $(decode_log.requestId), \\"registrationId\\": $(decode_cbor.registrationId), \\"cid\\": $(parse) }"
+]
+
+encode_tx [
+  type="ethabiencode"
+  abi="fulfillOracleRequest2(bytes32 requestId, uint256 payment, address callbackAddress, bytes4 callbackFunctionId, uint256 expiration, bytes calldata data)"
+  data="{\\"requestId\\": $(decode_log.requestId), \\"payment\\": $(decode_log.payment), \\"callbackAddress\\": $(decode_log.callbackAddr), \\"callbackFunctionId\\": $(decode_log.callbackFunctionId), \\"expiration\\": $(decode_log.cancelExpiration), \\"data\\": $(encode_data)}"
+]
+    
+submit_tx    [type="ethtx" to="0x43B26Ac199FA7c8fef86e716FA70e29ed11977Bb" data="$(encode_tx)"]
+
+    decode_log -> decode_cbor -> fetch -> parse ->  encode_data -> encode_tx -> submit_tx
+"""

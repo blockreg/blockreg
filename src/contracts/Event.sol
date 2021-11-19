@@ -2,7 +2,9 @@
 pragma solidity ^0.8.0; 
 
 struct Event {
-	string name;
+	uint id;
+	uint date;
 	int32 maxAttendance; // Signed: -1 means no cap
 	uint32 countRegistered;
+	string dataCid;
 }
