@@ -20,7 +20,7 @@ contract Events is Ownable {
 
 	function createEvent(string memory name_, int maxAttendance_) public {
 		//Create the event
-		_events.push(Event(name_, int32(maxAttendance_), 0));
+		_events.push(Event(name_, "", block.timestamp + 90 days, int32(maxAttendance_), 0, 0x0));
 		uint id = _events.length - 1;
 
 		_eventToOwner[id] = msg.sender;
