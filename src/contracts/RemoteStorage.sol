@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: MIT
+//SPDX-License-Identifier: CC-BY-NC-2.0
 pragma solidity ^0.8.7;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
@@ -11,11 +11,19 @@ contract RemoteStorage is ChainlinkClient {
   bytes32 public lastRequestId;
   string public cid;
   bytes public data;
+
+  //TODO: These are temporary until I refactor this 
+  uint256 eventId;
+  uint256 registrationID;
   
-  event EventDataSet(
+  event EventDataStored (
     bytes32 indexed requestId,
-    string name,
-    string description
+	uint eventId
+  );
+
+  event RegistrationDataStored(
+    bytes32 indexed requestId,
+	uint registrationId
   );
 
   /**
@@ -36,13 +44,15 @@ contract RemoteStorage is ChainlinkClient {
    */
   function setEventData(
     string memory _jobId,
+	uint256 eventId,
     string memory _name,
     string memory _description
   )
     public
   {
-    Chainlink.Request memory req = buildChainlinkRequest(_stringToBytes32(_jobId), address(this), this.fulfillSetData.selector);
-    req.add("name", _name);
+    Chainlink.Request memory req = buildChainlinkRequest(_stringToBytes32(_jobId), address(this), this.fulfillSetEventData.selector);
+    req.addUint("eventId", eventId);
+	req.add("name", _name);
     req.add("description", _description);
     requestOracleData(req, ORACLE_PAYMENT);
   }
@@ -57,13 +67,15 @@ contract RemoteStorage is ChainlinkClient {
    */
   function setRegistrationData(
     string memory _jobId,
+	uint256 registrationId,
     string memory _name,
     string memory _company,
     string memory _email
   )
     public
   {
-    Chainlink.Request memory req = buildChainlinkRequest(_stringToBytes32(_jobId), address(this), this.fulfillSetData.selector);
+    Chainlink.Request memory req = buildChainlinkRequest(_stringToBytes32(_jobId), address(this), this.fulfillSetRegistrationData.selector);
+	req.addUint("registrationId", registrationId);
     req.add("name", _name);
     req.add("company", _company);
     req.add("email", _email);
@@ -90,8 +102,9 @@ contract RemoteStorage is ChainlinkClient {
    * @notice Returns the IPFS CID of the remote data
    * @dev This is called by the oracle. recordChainlinkFulfillment must be used.
    */
-  function fulfillSetData(
+  function fulfillSetEventData(
     bytes32 _requestId,
+	uint256 _eventId,
     bytes calldata _cid
   )
     public
@@ -99,7 +112,25 @@ contract RemoteStorage is ChainlinkClient {
   {
     lastRequestId = _requestId;
     cid = string(abi.encodePacked(_cid));
+	eventId = _eventId;
   } 
+
+  /**
+   * @notice Returns the IPFS CID of the remote data
+   * @dev This is called by the oracle. recordChainlinkFulfillment must be used.
+   */
+  function fulfillSetRegistrationData(
+    bytes32 _requestId,
+	uint256 _registrationId,
+    bytes calldata _cid
+  )
+    public
+    recordChainlinkFulfillment(_requestId)
+  {
+    lastRequestId = _requestId;
+    cid = string(abi.encodePacked(_cid));
+	registrationId = _registrationId;
+  }
   
   /**
    * @notice Returns the remote data stored by the IPFS CID
