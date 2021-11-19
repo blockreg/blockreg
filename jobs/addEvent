@@ -19,7 +19,7 @@ decode_cbor  [
 fetch  [
   type=bridge 
   name="ipfs" 
-  requestData="{\\"id\\": $(jobSpec.externalJobID), \\"action\\": \\"addEvent\\", \\"name\\": $(decode_cbor.name), \\"description\\": $(decode_cbor.description)}"
+  requestData="{\\"id\\": $(jobSpec.externalJobID), \\"action\\": \\"addEvent\\", \\"eventId\\": $(decode_cbor.eventId), \\"name\\": $(decode_cbor.name), \\"description\\": $(decode_cbor.description)}"
 ]
 
 parse  [
@@ -30,8 +30,8 @@ parse  [
 
 encode_data  [
   type="ethabiencode" 
-  abi="(bytes32 requestId, bytes cid)" 
-  data="{ \\"requestId\\": $(decode_log.requestId), \\"cid\\": $(parse) }"
+  abi="(bytes32 requestId, uint256 eventId, bytes cid)" 
+  data="{ \\"requestId\\": $(decode_log.requestId), \\"eventId\\": $(decode_cbor.eventId), \\"cid\\": $(parse)}"
 ]
 
 encode_tx [
