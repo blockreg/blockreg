@@ -3,6 +3,8 @@ pragma solidity ^0.8.7;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
+address constant LINK_TOKEN_KOVAN = 0xa36085F69e2889c224210F603D836748e7dC0088;
+
 abstract contract Storable is ChainlinkClient {
 	using Chainlink for Chainlink.Request;
 	uint256 constant private ORACLE_PAYMENT = 1 * LINK_DIVISIBILITY;
@@ -19,25 +21,17 @@ abstract contract Storable is ChainlinkClient {
 	bytes32 storageCid;
 
 	constructor(address _oracle, string memory _jobId) {
-		setChainlinkToken(0xa36085F69e2889c224210F603D836748e7dC0088); //Kovan
+		setChainlinkToken(LINK_TOKEN_KOVAN); 
 		setChainlinkOracle(_oracle); 
 		jobId = _stringToBytes32(_jobId);
 	}
-
-	/** 
-	* @notice When the oracle fulfills the request, this callback will be invoked. 
-	* @param _requestId required bytes32 
-	* @param any should match the ABI in the job spec
-	* @dev required modifier: recordChainlinkFulfillment(_requestId) 
-	*/
-	// function onDataStored(bytes32 _requestId) virtual public;
 
 	/**
 	* @notice Queue string data to be stored
 	* @param _key string key to add
 	* @param _value string value to add
 	*/
-	function _addStorableString(string memory _key, string memory _value) internal {
+	function addStorableString(string memory _key, string memory _value) internal {
 		_data.stringKeys.push(_key);
 		_data.stringValues[_key] = _value;
 	}
@@ -47,7 +41,7 @@ abstract contract Storable is ChainlinkClient {
 	* @param _key string key to add
 	* @param _value uint value to add
 	*/
-	function _addStorableUint(string memory _key, uint _value) internal {
+	function addStorableUint(string memory _key, uint _value) internal {
 		_data.uintKeys.push(_key);
 		_data.uintValues[_key] = _value;
 	}
@@ -56,15 +50,19 @@ abstract contract Storable is ChainlinkClient {
 	* @notice Store the data on IPFS
 	* @param _callbackFunctionSignature bytes3 the .selector of the function the oracle will call when it fulfills
 	*/
-	function _storeData(bytes4 _callbackFunctionSignature) internal {
+	function storeData(bytes4 _callbackFunctionSignature) internal {
 		Chainlink.Request memory req = buildChainlinkRequest(jobId, address(this), _callbackFunctionSignature);
-		for(uint i=0; i<_data.stringKeys.length; i++) {
-			req.add(_data.stringKeys[i], _data.stringValues[_data.stringKeys[i]]);
-			// delete(_data.stringValues[_data.stringKeys[i]]);
+
+		for(uint i=_data.stringKeys.length; i>0; i--){
+			req.add(_data.stringKeys[i-1], _data.stringValues[_data.stringKeys[i-1]]);
+			delete(_data.stringValues[_data.stringKeys[i-1]]);
+			_data.stringKeys.pop();
 		}
-		for(uint j=0; j<_data.uintKeys.length; j++) {
-			req.addUint(_data.uintKeys[j], _data.uintValues[_data.uintKeys[j]]);
-			// delete(_data.uintValues[_data.uintKeys[j]]);
+
+		for(uint j=_data.uintKeys.length; j>0; j--){
+			req.addUint(_data.uintKeys[j-1], _data.uintValues[_data.uintKeys[j-1]]);
+			delete(_data.uintValues[_data.uintKeys[j-1]]);
+			_data.uintKeys.pop();
 		}
 		requestOracleData(req, ORACLE_PAYMENT);
 	}
