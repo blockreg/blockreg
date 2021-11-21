@@ -14,8 +14,14 @@ contract Events is Ownable, Storable {
 
 	Event[] private _events;
 
-	event NewEvent(string name, uint id);
-	event UpdateEvent(uint id, string name, int maxAttendance);
+	event EventSaved(
+		uint eventId, 
+		string name, 
+		string description, 
+		uint date, 
+		uint fee,
+		int maxAttendance
+	);
 
 	mapping(uint256 => address) internal _eventToOwner;
 	mapping(address => uint256) internal _eventsOwnedCount;
@@ -25,21 +31,28 @@ contract Events is Ownable, Storable {
 		_;
 	}
 
-	function createEvent(string memory name, string memory description, uint date, int32 maxAttendance) public {
+	function createEvent(
+		string memory name, 
+		string memory description, 
+		uint date,
+		uint fee,  
+		int32 maxAttendance
+	) public {
 		//Create the event
-		_events.push(Event(0, date, maxAttendance, 0, ""));
-		
-		uint id = _events.length - 1;
-		_events[id].id = id;
+		_events.push(Event(0, date, fee, maxAttendance, 0, ""));
+		uint id = _events.length -1;
 
-		addStorableString("name", name);
-		addStorableString("description", description);
-		addStorableUint("eventId", id);
-		storeData(this.onDataIsSet.selector);
+		_setEventData(
+			id,
+			name, 
+			description,
+			date,
+			fee, 
+			maxAttendance
+		);
 
 		_eventToOwner[id] = msg.sender;
 		_eventsOwnedCount[msg.sender]++;
-		emit NewEvent(name, id);
 	}
 
 	function getEvent(uint eventId) external view returns(Event memory) {
@@ -48,19 +61,52 @@ contract Events is Ownable, Storable {
 		return _events[eventId];
 	}
 
-	function updateEvent(uint eventId, string memory name, string memory description, uint date, int maxAttendance) external eventOwnedBy(eventId) {
+	function updateEvent(
+		uint eventId, 
+		string memory name, 
+		string memory description, 
+		uint date, 
+		uint fee,
+		int maxAttendance
+	) external eventOwnedBy(eventId) {
 		Event storage _event = _events[eventId];
 		require(maxAttendance == -1 || uint256(maxAttendance) >= _event.countRegistered);
 
-		_event.maxAttendance = int32(maxAttendance);
-		_event.date = date;
+		_setEventData(
+			eventId,
+			name, 
+			description,
+			date,
+			fee, 
+			int32(maxAttendance)
+		);
+	}
 
+	function _setEventData(
+		uint eventId,
+		string memory name, 
+		string memory description, 
+		uint date,
+		uint fee,  
+		int32 maxAttendance
+	) private {
 		addStorableString("name", name);
 		addStorableString("description", description);
 		addStorableUint("eventId", eventId);
 		storeData(this.onDataIsSet.selector);
-		
-		// emit UpdateEvent(eventId_, name_, maxAttendance_);
+
+		_events[eventId].date = date;
+		_events[eventId].fee = fee;
+		_events[eventId].maxAttendance = maxAttendance;
+
+		emit EventSaved(
+			eventId, 
+			name, 
+			description, 
+			date, 
+			fee, 
+			maxAttendance
+		);
 	}
 
 	/**
