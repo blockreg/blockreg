@@ -116,6 +116,15 @@ contract Events is Ownable, Storable {
 		);
 	}
 
+	/**
+	* @notice Sets the event data on the internal array. Used by both create and update functions
+	* @param eventId the index of the event to update
+	* @param name string offloaded to IPFS
+	* @param description string offloaded to IPFS
+	* @param date uint date of the event in epoch seconds
+	* @param fee uint fee in ether
+	* @param maxAttendance int -- value of -1 means unlimited
+	*/
 	function _setEventData(
 		uint eventId,
 		string memory name, 
@@ -141,6 +150,18 @@ contract Events is Ownable, Storable {
 			fee, 
 			maxAttendance
 		);
+	}
+
+	/**
+	* @notice An external utility function for other contracts to ensure that someone is the event owner
+	* @param eventId the index of the event 
+	* @param account address test
+	*/
+	function isEventOwner(
+		uint eventId, 
+		address account
+	) external view returns(bool){
+		return _eventToOwner[eventId] == account;
 	}
 
 	/**
