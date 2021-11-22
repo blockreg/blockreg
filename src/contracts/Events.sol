@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0; 
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./Event.sol";
 import "./Storable.sol";
 
 address constant ORACLE = 0x43B26Ac199FA7c8fef86e716FA70e29ed11977Bb; //Deployment of Operator.sol
@@ -14,7 +13,18 @@ interface RegistrationsInterface {
 
 contract Events is Ownable, Storable {
 	constructor()
-	Storable(ORACLE, JOB_ID) {}
+	Storable(ORACLE, JOB_ID) {
+		// Burn the first entry to avoid 0 index
+		_events.push(Event(0, 0, 0, 0, ""));
+	}
+
+	struct Event {
+		uint id;
+		uint date;
+		uint fee; //In wei
+		int32 maxAttendance; // Signed: -1 means no cap
+		string dataCid;
+	}
 
 	Event[] private _events;
 	RegistrationsInterface _registrations;
@@ -139,7 +149,7 @@ contract Events is Ownable, Storable {
 		storeData(this.onDataIsSet.selector);
 
 		_events[eventId].date = date;
-		_events[eventId].fee = fee * 1e18;
+		_events[eventId].fee = fee;
 		_events[eventId].maxAttendance = maxAttendance;
 
 		emit EventSaved(
