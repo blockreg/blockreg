@@ -72,7 +72,7 @@ abstract contract Storable is ChainlinkClient {
 	* @param source bytes32 
 	* @return string 
 	*/
-	function _bytes32ToString(bytes32 source) private pure returns (string memory) {
+	function _bytes32ToString(bytes32 source) internal pure returns (string memory) {
 		return string(abi.encodePacked(source));
 	}
 
@@ -81,7 +81,7 @@ abstract contract Storable is ChainlinkClient {
 	* @param source string 
 	* @return result bytes32
 	*/
-	function _stringToBytes32(string memory source) private pure returns (bytes32 result) {
+	function _stringToBytes32(string memory source) internal pure returns (bytes32 result) {
 		bytes memory tempEmptyStringTest = bytes(source);
 		if (tempEmptyStringTest.length == 0) {
 			return 0x0;
