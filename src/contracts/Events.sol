@@ -33,6 +33,8 @@ contract Events is Ownable, Storable {
 		uint eventId, 
 		string name, 
 		string description, 
+		string badgeColor,
+		string logoCid,
 		uint date, 
 		uint fee,
 		int maxAttendance
@@ -40,6 +42,10 @@ contract Events is Ownable, Storable {
 
 	mapping(uint256 => address) internal _eventToOwner;
 	mapping(address => uint256) internal _eventsOwnedCount;
+	
+	//Linked list style traversal
+	mapping(address => uint) internal _ownerToFirstEventCreated;
+	mapping(uint => uint) internal _ownersNextEvent;
 
 	modifier eventOwnedBy(uint eventId_) {
 		require(_eventToOwner[eventId_] == msg.sender);
@@ -65,6 +71,8 @@ contract Events is Ownable, Storable {
 	function createEvent(
 		string memory name, 
 		string memory description, 
+		string memory badgeColor,
+		string memory logoCid,
 		uint date,
 		uint fee, // IMPORTANT: In ether
 		int32 maxAttendance
@@ -77,6 +85,8 @@ contract Events is Ownable, Storable {
 			id,
 			name, 
 			description,
+			badgeColor,
+			logoCid,
 			date,
 			fee, 
 			maxAttendance
@@ -109,7 +119,9 @@ contract Events is Ownable, Storable {
 	function updateEvent(
 		uint eventId, 
 		string memory name, 
-		string memory description, 
+		string memory description,
+		string memory badgeColor,
+		string memory logoCid,
 		uint date, 
 		uint fee,
 		int maxAttendance
@@ -120,6 +132,8 @@ contract Events is Ownable, Storable {
 			eventId,
 			name, 
 			description,
+			badgeColor,
+			logoCid,
 			date,
 			fee, 
 			int32(maxAttendance)
@@ -139,27 +153,67 @@ contract Events is Ownable, Storable {
 		uint eventId,
 		string memory name, 
 		string memory description, 
+		string memory badgeColor,
+		string memory logoCid,
 		uint date,
 		uint fee,  
 		int32 maxAttendance
 	) private {
 		addStorableString("name", name);
 		addStorableString("description", description);
+		addStorableString("badgeColor", badgeColor);
+		addStorableString("logoCid", logoCid);
 		addStorableUint("eventId", eventId);
 		storeData(this.onDataIsSet.selector);
 
+		_events[eventId].id = eventId;
 		_events[eventId].date = date;
 		_events[eventId].fee = fee;
 		_events[eventId].maxAttendance = maxAttendance;
+
+		// Track their first event...
+		if ( _ownerToFirstEventCreated[msg.sender] == 0 ) {
+			_ownerToFirstEventCreated[msg.sender] = eventId;
+		} else {
+			// Step through the map to see what their last event without a next event is...
+			uint index = _ownerToFirstEventCreated[msg.sender];
+			while (_ownersNextEvent[index] > 0) {
+				index = _ownersNextEvent[index];
+			}
+			// Index is now their most recently created event
+			_ownersNextEvent[index] = eventId;
+		}
+		// Add an entry to the map to signify that eventId is their most recent event
+		_ownersNextEvent[eventId] = 0;
 
 		emit EventSaved(
 			eventId, 
 			name, 
 			description, 
+			badgeColor,
+			logoCid,
 			date, 
 			fee, 
 			maxAttendance
 		);
+	}
+
+	/**
+	* @notice Retrieves all the events hosted by the account making the request
+	* @return Event array
+	*/
+	function getHostedEvents() external view returns(Event[] memory) {
+		Event[] memory ownedEvents = new Event[](_eventsOwnedCount[msg.sender]);
+
+		uint id = _ownerToFirstEventCreated[msg.sender];
+		uint count = 0;
+		do {
+			ownedEvents[count] = _events[id];
+			id = _ownersNextEvent[id];
+			count++;
+		} while(id > 0);
+
+		return ownedEvents;
 	}
 
 	/**
